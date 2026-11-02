@@ -95,8 +95,9 @@ export async function prepareSessionStorage(options: {
     workspaceKey: options.cwd,
     presentationSurface: "desktop",
   });
-  if (!command?.supportsStorageStartup || !command.storagePreparationEntry)
-    throw statusError("unsupported_runtime");
+  // 外部 agent（env 覆盖）只继承 storage 准备入口，不支持协议级 storage 状态上报，
+  // 因此这里只要求入口存在，不要求 supportsStorageStartup 声明。
+  if (!command?.storagePreparationEntry) throw statusError("unsupported_runtime");
   const entry = command.storagePreparationEntry;
   await new Promise<void>((resolve, reject) => {
     const child = new Worker(entry, {

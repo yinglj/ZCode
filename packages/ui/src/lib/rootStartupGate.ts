@@ -22,6 +22,8 @@ interface ProviderStartupSyncState {
 
 interface ProviderAvailabilityLoginEntryGuardState {
   isWebRemoteControlRoot: boolean;
+  /** 外部 agent（claude-bridge）自带认证与 provider，不需要 zcode 账号。 */
+  usesExternalAgent?: boolean;
 }
 
 interface ProviderStartupResolutionState {
@@ -52,7 +54,11 @@ export function shouldEnableProviderAvailabilityLoginEntryGuard(
 ): boolean {
   // 修复原因：手机 Web 远控只 attachment 到桌面已有 host，不能用本地空 provider
   // 快照触发登录页，否则断连/home-only 首页会被 WelcomeScreen 覆盖。
-  return !state.isWebRemoteControlRoot;
+  if (state.isWebRemoteControlRoot) return false;
+  // 外部 agent（claude-bridge）自带认证与 provider：此时 zcode 的 provider 快照
+  // 必然为空，但用户并不需要 zcode 账号，否则会被 WelcomeScreen 挡在工作台之外。
+  if (state.usesExternalAgent) return false;
+  return true;
 }
 
 export function shouldResolveProviderStartupState(

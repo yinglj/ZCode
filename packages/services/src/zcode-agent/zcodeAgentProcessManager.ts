@@ -445,11 +445,27 @@ export function resolveDefaultZCodeAgentCommand(
 ): ZCodeAgentCommand | null {
   const command = process.env.ZCODE_AGENT_SERVER_COMMAND?.trim();
   if (command) {
+    // env 覆盖只替换对话 agent，不改 zcode 自己的会话存储：tasks-index 的
+    // storage preparation 仍由自带 bundle 完成，否则宿主启动阶段会以
+    // unsupported_runtime 拒绝进入工作台。storage 准备器需要 bundled 的
+    // ELECTRON_RUN_AS_NODE=1，故连 env 一并沿用。
+    const storageHost =
+      resolveBundledWorkspaceZCodeAgentCommand(context) ??
+      resolveElectronRuntimeZCodeAgentCommand(context);
     return applyPresentationSurfaceToCommand(
       {
         command,
         args: parseArgsJson(process.env.ZCODE_AGENT_SERVER_ARGS_JSON) ?? ["app-server", "--stdio"],
         cwd: process.env.ZCODE_AGENT_SERVER_CWD?.trim() || context.workspacePath,
+        // 只继承 storage 准备入口，不声明 supportsStorageStartup：后者会让
+        // ProtocolClient 对本 agent 开启 30s storage 状态门（外部 agent 不持有
+        // tasks-index，无法如实上报，超时即全请求拒绝），也会触发 v4 重订自激风暴。
+        ...(storageHost?.storagePreparationEntry
+          ? {
+              storagePreparationEntry: storageHost.storagePreparationEntry,
+              ...(storageHost.env ? { env: storageHost.env } : {}),
+            }
+          : {}),
       },
       context.presentationSurface,
     );

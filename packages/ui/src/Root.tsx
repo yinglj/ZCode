@@ -568,6 +568,10 @@ function RootInner({
   const shouldPreferDirectoryBrowser = Boolean(preferDirectoryBrowser);
   const supportsEmbeddedBrowser = explicitSupportsEmbeddedBrowser ?? Boolean(isDesktop);
   const isResolvingStartupAuthState = isRestoringOAuthSession;
+  // 外部 agent（claude-bridge）由 preload 通过 ZCODE_AGENT_SERVER_COMMAND 探测。
+  const usesExternalAgent = Boolean(
+    (window as { zcode?: { externalAgent?: boolean } }).zcode?.externalAgent,
+  );
   const rootProviderAvailability = resolveProviderAvailabilityState({
     modelSelectionView: rootModelSelectionView,
   });
@@ -580,6 +584,7 @@ function RootInner({
   const providerAvailabilityLoginEntryGuardEnabled =
     shouldEnableProviderAvailabilityLoginEntryGuard({
       isWebRemoteControlRoot,
+      usesExternalAgent,
     });
   const { startupCheckCompleted: providerAvailabilityStartupCheckCompleted } =
     useProviderAvailabilityLoginEntryGuard({

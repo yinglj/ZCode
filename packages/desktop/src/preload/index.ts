@@ -262,6 +262,9 @@ window.addEventListener("DOMContentLoaded", updateRendererProcessTitle, {
  * 通过 MessagePort RPC 访问，不再经过此 bridge。
  */
 contextBridge.exposeInMainWorld("zcode", {
+  // 外部 agent（如 claude-bridge）自带认证与 provider，不需要 zcode 账号。
+  // 启动门禁据此跳过 WelcomeScreen，否则无账号用户进不了工作台。
+  externalAgent: Boolean(process.env.ZCODE_AGENT_SERVER_COMMAND?.trim()),
   connectRemote: (
     options: RemoteTarget,
     requestId?: string,
