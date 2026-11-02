@@ -465,6 +465,7 @@ import { AccountProviderApiClient } from "./model-provider/accountProviderApiCli
 import { createAccountProjectTokenClient } from "./model-provider/accountProjectTokenClient.js";
 import { AccountProviderApiKeyResolver } from "./model-provider/accountProviderApiKeyResolver.js";
 import { createProviderConfigRuntime } from "./model-provider/providerConfigRuntime.js";
+import { seedExternalClaudeProviders } from "./model-provider/claude-codex/providerSeed.js";
 import { fetchZCodeBuiltinRemoteRelease } from "./model-provider/zcodeBuiltinRemoteConfig.js";
 import {
   createProviderRuntimeFromConfigRuntime,
@@ -2999,7 +3000,18 @@ export function createLocalServices(options: {
     );
   }
   const log = createServiceLogger("provider-runtime");
-  void providerRuntime.start().then(
+  // 外部 agent 模式：先把 claude-codex 模型目录投影成 personal provider，再启动注册表。
+  // 失败不阻断启动——没有 provider 只是输入框禁用，崩掉会连工作台都进不去。
+  void seedExternalClaudeProviders(
+    providerConfigRuntime,
+    process.env,
+    (reason, detail) => log.warn(undefined, "外部 agent provider 投影跳过", { reason, detail }),
+  )
+    .catch((error: unknown) => {
+      log.warn(undefined, "外部 agent provider 投影失败", { error });
+    })
+    .then(() => providerRuntime.start())
+    .then(
     () => {
       const snapshot = providerRuntime.registryService.getSnapshot()!;
       log.info("Provider Registry 已就绪", {
