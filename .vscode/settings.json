@@ -8,5 +8,9 @@
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true
   },
-  "cmake.sourceDirectory": "${workspaceFolder}/scripts/native-search-tools-windows"
+  "cmake.sourceDirectory": "${workspaceFolder}/scripts/native-search-tools-windows",
+  "workbench.colorCustomizations": {
+    "sideBar.border": "#DFE5EF",
+    "sideBar.background": "#fefefe"
+  }
 }
