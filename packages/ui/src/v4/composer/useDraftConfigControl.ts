@@ -277,7 +277,10 @@ export function useDraftConfigControl(params: {
       // 历史授权曾被当成新指令重放，覆盖最新确认模式。恢复直接采用当前事实，文字只恢复模型。
       draft = {
         ...draft,
-        mode: currentMode,
+        // 用户显式选过档位就保留他的选择：会话首个快照比 UI 慢，会把刚选的
+        // 「完全访问」抹回 agent 上报的旧档位（切了还是每步弹确认）。
+        // modeSelection 那行本来就有这个守卫，mode 漏了。
+        ...(draft.modeChosen ? {} : { mode: currentMode }),
         planEnabled: currentPlan,
         modelSelection: draft.mode ? draft.modelSelection : sessionConfig.modelSelection,
       };
@@ -967,6 +970,7 @@ export function useDraftConfigControl(params: {
         updateComposerDraft((current) => ({
           ...current,
           mode: parsed.data,
+          modeChosen: true,
         }));
     },
     [updateComposerDraft],

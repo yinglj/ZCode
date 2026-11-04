@@ -26,6 +26,12 @@ export interface V4ComposerDraft {
   mention?: ComposerMentionPrefill;
   /** 有合法 mode 表示已经初始化；没有模型仍是明确空态，不能按旧文本草稿补默认。 */
   mode?: SubmissionMode;
+  /**
+   * 用户在本 scope 里显式选过权限档。首个快照用它区分「还没选」和「选了但
+   * 快照晚到」：后者不能被 agent 上报的旧档位覆盖，否则切「完全访问」会被
+   * 抹回「变更前确认」（大会话快照要几秒，竞态几乎必现）。
+   */
+  modeChosen?: boolean;
   planEnabled?: boolean;
   modelSelection?: ModelSelection;
   updatedAt: number;
@@ -289,6 +295,8 @@ function readDraft(value: unknown): V4ComposerDraft | null {
       : {}),
     ...(hasMention ? { mention: mention as unknown as ComposerMentionPrefill } : {}),
     ...(mode.success ? { mode: mode.data === "plan" ? ("build" as const) : mode.data } : {}),
+    // 用户显式选过档位：这是用户意图的事实，跟 agent 上报的档位无关，跨重启保留。
+    ...(value.modeChosen === true ? { modeChosen: true } : {}),
     ...(typeof value.planEnabled === "boolean"
       ? { planEnabled: value.planEnabled }
       : mode.success
